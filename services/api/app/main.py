@@ -217,45 +217,124 @@ def resolve_selection(payload: SelectionResolveIn):
         boq_ids: set[str] = set()
         activity_ids: set[str] = set()
         if payload.source_type == 'element':
-            element_ids.update(ids)
             rows = conn.execute(
-                text('SELECT element_id, boq_item_id FROM element_boq_links WHERE element_id = ANY(:ids)'),
-                {'ids': ids},
+                text("""
+                  SELECT e.id
+                  FROM bim_elements e
+                  JOIN model_revisions r ON r.id=e.revision_id
+                  JOIN models m ON m.id=r.model_id
+                  JOIN projects p ON p.id=m.project_id
+                  WHERE e.id = ANY(:ids) AND p.organization_id=:org
+                """),
+                {'ids': ids, 'org': settings.default_org_id},
+            ).all()
+            element_ids.update(str(r.id) for r in rows)
+            rows = conn.execute(
+                text("""
+                  SELECT ebl.element_id, ebl.boq_item_id
+                  FROM element_boq_links ebl
+                  JOIN bim_elements e ON e.id=ebl.element_id
+                  JOIN model_revisions r ON r.id=e.revision_id
+                  JOIN models m ON m.id=r.model_id
+                  JOIN projects p ON p.id=m.project_id
+                  JOIN boq_items b ON b.id=ebl.boq_item_id AND b.project_id=p.id
+                  WHERE ebl.element_id = ANY(:ids) AND p.organization_id=:org
+                """),
+                {'ids': list(element_ids), 'org': settings.default_org_id},
             ).all()
             boq_ids.update(str(r.boq_item_id) for r in rows)
             rows = conn.execute(
                 text("""
-                  SELECT element_id, activity_id FROM element_activity_links WHERE element_id = ANY(:ids)
+                  SELECT eal.element_id, eal.activity_id
+                  FROM element_activity_links eal
+                  JOIN bim_elements e ON e.id=eal.element_id
+                  JOIN model_revisions r ON r.id=e.revision_id
+                  JOIN models m ON m.id=r.model_id
+                  JOIN projects p ON p.id=m.project_id
+                  JOIN activities a ON a.id=eal.activity_id AND a.project_id=p.id
+                  WHERE eal.element_id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': ids},
+                {'ids': list(element_ids), 'org': settings.default_org_id},
             ).all()
             activity_ids.update(str(r.activity_id) for r in rows)
         elif payload.source_type == 'boq':
-            boq_ids.update(ids)
             rows = conn.execute(
-                text('SELECT element_id, boq_item_id FROM element_boq_links WHERE boq_item_id = ANY(:ids)'),
-                {'ids': ids},
+                text("""
+                  SELECT b.id
+                  FROM boq_items b
+                  JOIN projects p ON p.id=b.project_id
+                  WHERE b.id = ANY(:ids) AND p.organization_id=:org
+                """),
+                {'ids': ids, 'org': settings.default_org_id},
+            ).all()
+            boq_ids.update(str(r.id) for r in rows)
+            rows = conn.execute(
+                text("""
+                  SELECT ebl.element_id, ebl.boq_item_id
+                  FROM element_boq_links ebl
+                  JOIN boq_items b ON b.id=ebl.boq_item_id
+                  JOIN bim_elements e ON e.id=ebl.element_id
+                  JOIN model_revisions r ON r.id=e.revision_id
+                  JOIN models m ON m.id=r.model_id
+                  JOIN projects p ON p.id=b.project_id AND p.id=m.project_id
+                  WHERE ebl.boq_item_id = ANY(:ids) AND p.organization_id=:org
+                """),
+                {'ids': list(boq_ids), 'org': settings.default_org_id},
             ).all()
             element_ids.update(str(r.element_id) for r in rows)
             if element_ids:
                 rows = conn.execute(
-                    text('SELECT activity_id FROM element_activity_links WHERE element_id = ANY(:ids)'),
-                    {'ids': list(element_ids)},
+                    text("""
+                      SELECT eal.activity_id
+                      FROM element_activity_links eal
+                      JOIN bim_elements e ON e.id=eal.element_id
+                      JOIN model_revisions r ON r.id=e.revision_id
+                      JOIN models m ON m.id=r.model_id
+                      JOIN projects p ON p.id=m.project_id
+                      JOIN activities a ON a.id=eal.activity_id AND a.project_id=p.id
+                      WHERE eal.element_id = ANY(:ids) AND p.organization_id=:org
+                    """),
+                    {'ids': list(element_ids), 'org': settings.default_org_id},
                 ).all()
                 activity_ids.update(str(r.activity_id) for r in rows)
         else:
-            activity_ids.update(ids)
             rows = conn.execute(
                 text("""
-                  SELECT element_id, activity_id FROM element_activity_links WHERE activity_id = ANY(:ids)
+                  SELECT a.id
+                  FROM activities a
+                  JOIN projects p ON p.id=a.project_id
+                  WHERE a.id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': ids},
+                {'ids': ids, 'org': settings.default_org_id},
+            ).all()
+            activity_ids.update(str(r.id) for r in rows)
+            rows = conn.execute(
+                text("""
+                  SELECT eal.element_id, eal.activity_id
+                  FROM element_activity_links eal
+                  JOIN activities a ON a.id=eal.activity_id
+                  JOIN bim_elements e ON e.id=eal.element_id
+                  JOIN model_revisions r ON r.id=e.revision_id
+                  JOIN models m ON m.id=r.model_id
+                  JOIN projects p ON p.id=a.project_id AND p.id=m.project_id
+                  WHERE eal.activity_id = ANY(:ids) AND p.organization_id=:org
+                """),
+                {'ids': list(activity_ids), 'org': settings.default_org_id},
             ).all()
             element_ids.update(str(r.element_id) for r in rows)
             if element_ids:
                 rows = conn.execute(
-                    text('SELECT boq_item_id FROM element_boq_links WHERE element_id = ANY(:ids)'),
-                    {'ids': list(element_ids)},
+                    text("""
+                      SELECT ebl.boq_item_id
+                      FROM element_boq_links ebl
+                      JOIN bim_elements e ON e.id=ebl.element_id
+                      JOIN model_revisions r ON r.id=e.revision_id
+                      JOIN models m ON m.id=r.model_id
+                      JOIN projects p ON p.id=m.project_id
+                      JOIN boq_items b ON b.id=ebl.boq_item_id AND b.project_id=p.id
+                      WHERE ebl.element_id = ANY(:ids) AND p.organization_id=:org
+                    """),
+                    {'ids': list(element_ids), 'org': settings.default_org_id},
                 ).all()
                 boq_ids.update(str(r.boq_item_id) for r in rows)
     return {
