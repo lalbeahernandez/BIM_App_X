@@ -10,11 +10,15 @@ Un **modular monolith** para API y dominio, workers asíncronos para IFC/trabajo
 
 ## Quick start
 
-Requisitos: Docker + Docker Compose v2.
+Requisitos: Python 3.11, Node.js 22 + npm, Git y Docker + Docker Compose v2 para el stack completo.
 
 ```bash
 cp .env.example .env
-make dev
+python scripts/dev.py verify
+python scripts/dev.py lint
+python scripts/dev.py typecheck
+python scripts/dev.py test
+docker compose up --build
 ```
 
 Servicios:
@@ -29,9 +33,12 @@ Servicios:
 Comprobación rápida:
 
 ```bash
-make smoke
-make test
+python scripts/dev.py smoke
+python scripts/dev.py test
 ```
+
+En Linux/macOS con GNU Make disponible, `make lint`, `make typecheck`, `make test`,
+`make smoke` y `make verify` son wrappers de `python scripts/dev.py ...`.
 
 ## Qué funciona ya
 
