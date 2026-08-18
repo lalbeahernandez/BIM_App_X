@@ -61,9 +61,14 @@ def smoke() -> None:
     run([sys.executable, "scripts/smoke_http.py"])
 
 
+def performance_budgets() -> None:
+    run([sys.executable, "scripts/check_performance_budgets.py"])
+
+
 COMMANDS = {
     "verify": verify,
     "codex-tasks": codex_tasks,
+    "performance-budgets": performance_budgets,
     "lint": lint,
     "lint-api": lint_api,
     "lint-web": lint_web,

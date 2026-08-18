@@ -18,6 +18,7 @@ python scripts/dev.py verify
 python scripts/dev.py lint
 python scripts/dev.py typecheck
 python scripts/dev.py test
+python scripts/dev.py performance-budgets
 docker compose up --build
 ```
 
@@ -50,6 +51,7 @@ En Linux/macOS con GNU Make disponible, `make lint`, `make typecheck`, `make tes
 - `FUNCTIONAL`: demo de Work Area en Next.js con paneles Viewer/BOQ/Gantt y selección cruzada sobre datos demo/API.
 - `FUNCTIONAL`: seed data, smoke tests y harness check.
 - `FUNCTIONAL`: CI de ejemplo con quality gates.
+- `FUNCTIONAL`: especificacion NFR/performance con budgets medibles y validador estatico.
 
 ## Qué es deliberadamente adapter/stub
 
