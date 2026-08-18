@@ -1,6 +1,6 @@
 id,phase,priority,target,title,estimate,depends_on,status,branch,pr,notes
 AUD-001,0 Discovery & Baseline,MUST,MVP,Auditar y poner verde el harness,0.5-1.5 d,,DONE,,,
-AUD-002,0 Discovery & Baseline,MUST,MVP,Inventariar boundaries y ownership,0.5-1.5 d,AUD-001,TODO,,,
+AUD-002,0 Discovery & Baseline,MUST,MVP,Inventariar boundaries y ownership,0.5-1.5 d,AUD-001,DONE,,,
 AUD-003,0 Discovery & Baseline,MUST,MVP,Fijar toolchain y dependencias,0.5-1.5 d,AUD-001,TODO,,,
 AUD-004,0 Discovery & Baseline,MUST,MVP,Reconciliar schema SQL y modelo de dominio,0.5-1.5 d,AUD-002,TODO,,,
 AUD-005,0 Discovery & Baseline,MUST,MVP,Definir NFR y presupuestos de rendimiento,0.5-1.5 d,AUD-001,TODO,,,
