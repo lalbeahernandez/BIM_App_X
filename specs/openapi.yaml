@@ -20,6 +20,12 @@ paths:
         - {name: project_id, in: path, required: true, schema: {type: string, format: uuid}}
       responses:
         '201': {description: Model created}
+  /v1/projects/{project_id}/work-area:
+    get:
+      parameters:
+        - {name: project_id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '200': {description: Work area BOQ, schedule and revision summary}
   /v1/models/{model_id}/revisions:
     post:
       parameters:
