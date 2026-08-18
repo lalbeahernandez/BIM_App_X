@@ -1,0 +1,126 @@
+{
+  "name": "bim-control-x-harness",
+  "version": "0.1.0",
+  "generated": "2026-08-10",
+  "status": "starter-harness",
+  "audited_baseline": "AUD-001",
+  "audited_at": "2026-08-18",
+  "component_status": [
+    {
+      "component": "docker-compose",
+      "status": "FUNCTIONAL",
+      "evidence": "Compose services and dependencies are declared; local execution blocked because Docker daemon is not running."
+    },
+    {
+      "component": "fastapi-api",
+      "status": "FUNCTIONAL",
+      "evidence": "Health unit test, ruff and mypy pass locally."
+    },
+    {
+      "component": "postgres-schema",
+      "status": "FUNCTIONAL",
+      "evidence": "Schema files are present and included in docker-compose init flow."
+    },
+    {
+      "component": "redis-ingest-queue",
+      "status": "FUNCTIONAL",
+      "evidence": "Revision upload enqueues Redis ingest jobs asynchronously."
+    },
+    {
+      "component": "ifcopenshell-worker",
+      "status": "FUNCTIONAL",
+      "evidence": "Worker persists IFC products by revision_id and GlobalId; integration execution requires Docker/services."
+    },
+    {
+      "component": "nextjs-work-area-demo",
+      "status": "FUNCTIONAL",
+      "evidence": "ESLint and TypeScript checks pass locally."
+    },
+    {
+      "component": "ci-harness-check",
+      "status": "FUNCTIONAL",
+      "evidence": "python scripts/verify_harness.py passes."
+    },
+    {
+      "component": "local-make-entrypoint",
+      "status": "BROKEN",
+      "evidence": "make is not installed in the current Windows PowerShell environment."
+    },
+    {
+      "component": "local-smoke-environment",
+      "status": "BROKEN",
+      "evidence": "Docker daemon is unavailable and localhost:8000 is occupied by a non-responsive svchost.exe process."
+    },
+    {
+      "component": "production-viewer",
+      "status": "STUB",
+      "evidence": "ViewerAdapter contract exists; production BIM renderer is intentionally not selected."
+    },
+    {
+      "component": "s3-storage-wiring",
+      "status": "STUB",
+      "evidence": "Adapter boundary exists; first development upload uses the shared uploads volume."
+    },
+    {
+      "component": "enterprise-search",
+      "status": "STUB",
+      "evidence": "Adapter placeholder only."
+    },
+    {
+      "component": "p6-msproject-erp-acc",
+      "status": "STUB",
+      "evidence": "Integration adapter placeholders only."
+    },
+    {
+      "component": "advanced-cpm",
+      "status": "STUB",
+      "evidence": "Advanced scheduling engine is out of current harness scope."
+    },
+    {
+      "component": "evm",
+      "status": "STUB",
+      "evidence": "EVM is documented as a future adapter/domain extension."
+    },
+    {
+      "component": "bcf-server",
+      "status": "STUB",
+      "evidence": "Fixture exists; server implementation is out of current harness scope."
+    },
+    {
+      "component": "ids",
+      "status": "STUB",
+      "evidence": "Feature flag and documentation exist; validation engine is out of current harness scope."
+    },
+    {
+      "component": "diff-clash",
+      "status": "STUB",
+      "evidence": "Adapter placeholder only."
+    },
+    {
+      "component": "gis",
+      "status": "STUB",
+      "evidence": "PostGIS foundation exists; GIS workflows are out of current harness scope."
+    }
+  ],
+  "functional_components": [
+    "docker-compose",
+    "fastapi-api",
+    "postgres-schema",
+    "redis-ingest-queue",
+    "ifcopenshell-worker",
+    "nextjs-work-area-demo",
+    "ci-harness-check"
+  ],
+  "adapter_components": [
+    "production-viewer",
+    "s3-storage-wiring",
+    "enterprise-search",
+    "p6-msproject-erp-acc",
+    "advanced-cpm",
+    "evm",
+    "bcf-server",
+    "ids",
+    "diff-clash",
+    "gis"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "datasets": [
+    {
+      "path": "../ifc/tiny.ifc",
+      "kind": "IFC",
+      "schema": "IFC4",
+      "expected_min_products": 1,
+      "owned_fixture": true
+    }
+  ]
+}

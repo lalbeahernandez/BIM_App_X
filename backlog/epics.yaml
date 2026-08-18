@@ -1,0 +1,60 @@
+version: 1
+priorities: [MUST, SHOULD, COULD]
+epics:
+  - id: FND
+    name: Foundation and tenancy
+    priority: MUST
+    stories:
+      - {id: FND-001, title: "Organization/project isolation", acceptance: "cross-tenant reads/writes denied"}
+      - {id: FND-002, title: "Audit and transactional outbox", acceptance: "critical writes produce audit/outbox"}
+      - {id: FND-003, title: "OpenAPI contract generation", acceptance: "CI detects drift"}
+  - id: BIM
+    name: BIM ingestion and revisioning
+    priority: MUST
+    stories:
+      - {id: BIM-001, title: "Upload IFC revision", acceptance: "immutable revision queued and traceable"}
+      - {id: BIM-002, title: "Element index by GlobalId", acceptance: "query class/name/storey/properties"}
+      - {id: BIM-003, title: "Geometry artifact pipeline", acceptance: "viewer loads optimized artifact"}
+  - id: VWR
+    name: Federated viewer
+    priority: MUST
+    stories:
+      - {id: VWR-001, title: "Viewer benchmark and selection", acceptance: "benchmark report and ADR"}
+      - {id: VWR-002, title: "Selection/isolate/filter/clipping", acceptance: "element identity survives renderer"}
+  - id: BOQ
+    name: QTO and 5D
+    priority: MUST
+    stories:
+      - {id: BOQ-001, title: "Element to BOQ mapping", acceptance: "manual and rule provenance"}
+      - {id: BOQ-002, title: "Quantity rules", acceptance: "unit-aware reproducible takeoff"}
+      - {id: BOQ-003, title: "Cost revisions and rates", acceptance: "approved budget distinct from forecast"}
+  - id: SCH
+    name: Scheduling and 4D
+    priority: MUST
+    stories:
+      - {id: SCH-001, title: "WBS/activity/calendars", acceptance: "calendar-aware dates"}
+      - {id: SCH-002, title: "FS SS FF SF and lag", acceptance: "CPM tests pass"}
+      - {id: SCH-003, title: "Baselines and data date", acceptance: "immutable baseline comparison"}
+      - {id: SCH-004, title: "4D simulation", acceptance: "viewer state derived from schedule"}
+  - id: PRG
+    name: Progress productivity and EVM
+    priority: SHOULD
+    stories:
+      - {id: PRG-001, title: "Append-only physical progress", acceptance: "history retained"}
+      - {id: PRG-002, title: "Crews and productivity", acceptance: "duration/forecast explainable"}
+      - {id: PRG-003, title: "PV EV AC and S-curves", acceptance: "data date and baseline explicit"}
+  - id: COL
+    name: Collaboration QA and OpenBIM
+    priority: SHOULD
+    stories:
+      - {id: COL-001, title: "BCF issues/viewpoints", acceptance: "round-trip basic BCF"}
+      - {id: COL-002, title: "IDS validation", acceptance: "failures linked to GlobalIds"}
+      - {id: COL-003, title: "QA/QC inspections", acceptance: "evidence and workflow audited"}
+  - id: ADV
+    name: Advanced model intelligence
+    priority: COULD
+    stories:
+      - {id: ADV-001, title: "Revision diff and lineage remap", acceptance: "added/removed/changed and confidence"}
+      - {id: ADV-002, title: "Clash orchestration", acceptance: "results link to issues"}
+      - {id: ADV-003, title: "GIS/setback", acceptance: "CRS-aware spatial checks"}
+      - {id: ADV-004, title: "AI copilot", acceptance: "grounded, permission-aware, human approval for writes"}

@@ -1,0 +1,5 @@
+* @platform-team
+/services/bim-worker/ @bim-engineering
+/db/ @backend-team @platform-team
+/infra/ @platform-team
+/docs/adr/ @architecture-team

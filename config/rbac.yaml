@@ -1,0 +1,7 @@
+roles:
+  admin: ["*"]
+  bim_manager: ["model:read", "model:write", "element:read", "classification:write", "issue:write"]
+  planner: ["schedule:read", "schedule:write", "element:read", "progress:read"]
+  cost_manager: ["boq:read", "boq:write", "cost:read", "cost:write", "element:read"]
+  site_manager: ["model:read", "schedule:read", "progress:write", "issue:write", "inspection:write"]
+  viewer: ["model:read", "boq:read", "schedule:read", "issue:read"]

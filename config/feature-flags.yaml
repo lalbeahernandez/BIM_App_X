@@ -1,0 +1,6 @@
+flags:
+  advanced_4d: {default: false, owner: scheduling}
+  ids_validation: {default: false, owner: openbim}
+  bcf_server: {default: false, owner: collaboration}
+  model_diff: {default: false, owner: bim}
+  gis_setback: {default: false, owner: gis}

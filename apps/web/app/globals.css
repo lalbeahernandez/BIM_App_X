@@ -1,0 +1,35 @@
+:root { font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #eef2f5; color: #17222b; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+button { font: inherit; }
+.topbar { height: 58px; padding: 0 18px; background: white; border-bottom: 1px solid #d9e0e5; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.topbar nav { font-size: 13px; color: #4d5b66; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { margin-left: 14px; padding: 5px 9px; border: 1px solid #b8dfc2; border-radius: 999px; font-size: 11px; }
+.workspace { padding: 10px; display: grid; grid-template-columns: 44% 56%; grid-template-rows: 56vh 35vh; gap: 10px; }
+.panel { background: white; border: 1px solid #d9e0e5; border-radius: 8px; min-width: 0; overflow: hidden; }
+.panelHeader { height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; border-bottom: 1px solid #e2e7eb; font-size: 12px; }
+.panelHeader span { color: #6b7a86; }
+.viewerPanel { grid-column: 1; grid-row: 1; }
+.boqPanel { grid-column: 2; grid-row: 1; }
+.schedulePanel { grid-column: 1 / span 2; grid-row: 2; }
+.viewerCanvas { height: calc(100% - 38px); position: relative; overflow: hidden; background: linear-gradient(#eaf6fb, #cfe4ed); perspective: 800px; }
+.building { width: 68%; height: 66%; margin: 11% auto 0; position: relative; transform: rotateX(58deg) rotateZ(-24deg); transform-style: preserve-3d; }
+.tower, .slab, .core { position: absolute; border: 1px solid rgba(0,0,0,.15); box-shadow: 0 10px 20px rgba(0,0,0,.12); }
+.tower { left: 25%; top: 2%; width: 46%; height: 54%; background: #2cbec0; transform: translateZ(56px); }
+.slab { left: 8%; top: 43%; width: 82%; height: 34%; background: #31b487; transform: translateZ(18px); }
+.core { left: 12%; top: 18%; width: 12%; height: 62%; background: #da4c59; transform: translateZ(70px); }
+.highlight { outline: 5px solid #ffb400; filter: brightness(1.08); }
+.viewerLegend { position: absolute; left: 12px; bottom: 12px; padding: 8px 10px; background: rgba(255,255,255,.9); border-radius: 6px; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { border-bottom: 1px solid #edf0f2; padding: 9px 8px; text-align: left; }
+th { position: sticky; top: 0; background: #fafbfc; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tr.selected { background: #fff1d5; }
+.ganttGrid { display: grid; grid-template-columns: 34% 66%; height: calc(100% - 38px); }
+.activityList { border-right: 1px solid #e2e7eb; padding: 6px; }
+.activity { width: 100%; display: grid; grid-template-columns: 60px 1fr 50px; gap: 8px; border: 0; background: white; padding: 8px; text-align: left; cursor: pointer; border-bottom: 1px solid #eef1f3; }
+.activity.selected { background: #fff1d5; }
+.timeline { padding: 6px; background-image: linear-gradient(to right, #eef1f3 1px, transparent 1px); background-size: 8.33% 100%; }
+.timelineRow { height: 38px; padding-top: 7px; }
+.bar { height: 24px; background: #4c91d7; color: white; padding: 4px 8px; border-radius: 3px; overflow: hidden; white-space: nowrap; font-size: 11px; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 1fr; grid-template-rows: 45vh auto 35vh; }.viewerPanel,.boqPanel,.schedulePanel{grid-column:1}.viewerPanel{grid-row:1}.boqPanel{grid-row:2}.schedulePanel{grid-row:3}.topbar nav{display:none} }

@@ -1,0 +1,2584 @@
+version: 1
+count: 140
+tasks:
+- id: AUD-001
+  title: Auditar y poner verde el harness
+  goal: Obtener una baseline reproducible antes de añadir funcionalidad.
+  depends_on: []
+  acceptance:
+  - '`make lint`, `make typecheck`, `make test` y `make smoke` ejecutan o cada bloqueo queda documentado'
+  - Se clasifica cada componente como FUNCTIONAL, STUB o BROKEN
+  - No se introducen features nuevas
+  tests:
+  - harness verification
+  - smoke
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-002
+  title: Inventariar boundaries y ownership
+  goal: Validar que módulos, adapters y dependencias respetan la arquitectura modular-monolith + workers.
+  depends_on:
+  - AUD-001
+  acceptance:
+  - Mapa de módulos y dependencias documentado
+  - No hay imports de vendor desde domain/core
+  - Desviaciones generan ADR o issue explícito
+  tests:
+  - static architecture check
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-003
+  title: Fijar toolchain y dependencias
+  goal: Hacer reproducibles versiones de Python, Node y dependencias.
+  depends_on:
+  - AUD-001
+  acceptance:
+  - Versiones de runtimes documentadas
+  - Lockfiles o estrategia equivalente presentes
+  - CI y local usan versiones compatibles
+  tests:
+  - clean bootstrap
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-004
+  title: Reconciliar schema SQL y modelo de dominio
+  goal: Comprobar que DB, schemas API y DOMAIN_MODEL representan las mismas entidades e invariantes.
+  depends_on:
+  - AUD-002
+  acceptance:
+  - Matriz entidad→tabla→API documentada
+  - Inconsistencias P0 corregidas o aisladas
+  - GlobalId sigue siendo identity revision-scoped, no PK
+  tests:
+  - schema smoke
+  - migration dry run
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-005
+  title: Definir NFR y presupuestos de rendimiento
+  goal: Convertir PERFORMANCE_BUDGETS en objetivos medibles para API, ingestión y viewer.
+  depends_on:
+  - AUD-001
+  acceptance:
+  - SLAs/SLOs iniciales definidos
+  - Datasets tiny/small/medium/large definidos
+  - Cada presupuesto tiene método de medición
+  tests:
+  - k6 baseline
+  - ingest benchmark baseline
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-006
+  title: Threat model inicial
+  goal: Modelar amenazas de tenancy, uploads IFC, object storage, jobs y APIs.
+  depends_on:
+  - AUD-002
+  acceptance:
+  - Threat model documentado
+  - Top riesgos tienen mitigación y owner
+  - Uploads y aislamiento tenant tienen controles verificables
+  tests:
+  - security checklist
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: AUD-007
+  title: Catálogo de fixtures y golden datasets
+  goal: Establecer datasets BIM/BCF/BOQ/schedule para pruebas deterministas.
+  depends_on:
+  - AUD-001
+  acceptance:
+  - Manifest incluye licencia/procedencia/checksum
+  - Fixtures no contienen secretos ni datos de cliente
+  - Golden outputs versionados
+  tests:
+  - fixture integrity test
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: AUD-008
+  title: Congelar roadmap técnico v1
+  goal: Transformar findings de auditoría en orden ejecutable y gates de release.
+  depends_on:
+  - AUD-003
+  - AUD-004
+  - AUD-005
+  - AUD-006
+  - AUD-007
+  acceptance:
+  - Roadmap incluye MVP/Beta/Enterprise
+  - Ruta crítica y dependencias reflejan el grafo de tareas
+  - No quedan P0 sin owner
+  tests:
+  - task graph validation
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-001
+  title: Propagar tenant context
+  goal: Implementar Organization/Project context server-side en toda request.
+  depends_on:
+  - AUD-008
+  acceptance:
+  - Toda query de proyecto exige contexto autorizado
+  - No se confía en project_id del cliente sin comprobar membership
+  - Errores cross-tenant son indistinguibles de recurso inexistente cuando convenga
+  tests:
+  - unit auth context
+  - integration cross-tenant
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-002
+  title: RBAC mínimo
+  goal: Implementar roles y permissions configurables para lectura/escritura/aprobación.
+  depends_on:
+  - FND-001
+  acceptance:
+  - Roles base Admin/BIM/Planner/QS/Site/QA/Viewer definidos
+  - Enforcement en API, no solo UI
+  - Tests cubren allow/deny
+  tests:
+  - unit permission matrix
+  - API authorization integration
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-003
+  title: Framework de migrations
+  goal: Sustituir dependencia exclusiva de init SQL por migrations versionadas y repetibles.
+  depends_on:
+  - AUD-004
+  acceptance:
+  - DB nueva llega al head con un comando
+  - Upgrade preserva seed/demo cuando corresponda
+  - Rollback strategy documentada para cambios no reversibles
+  tests:
+  - migration up/down
+  - fresh database integration
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-004
+  title: Auditoría transaccional
+  goal: Registrar actor, tenant, acción, entidad, before/after seguro y correlation id en writes críticos.
+  depends_on:
+  - FND-001
+  - FND-003
+  acceptance:
+  - Writes críticos generan audit row en misma transacción
+  - No se registran secretos/binarios
+  - Audit es consultable por proyecto y tiempo
+  tests:
+  - transaction rollback audit
+  - audit API integration
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-005
+  title: Transactional outbox
+  goal: Garantizar publicación fiable de domain events después de commits.
+  depends_on:
+  - FND-003
+  - FND-004
+  acceptance:
+  - Evento y write se persisten atómicamente
+  - Dispatcher es idempotente
+  - Estados pending/published/failed observables
+  tests:
+  - outbox transaction
+  - dispatcher retry
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-006
+  title: ObjectStorage adapter
+  goal: Implementar interfaz S3-compatible y backend MinIO local para archivos/artefactos.
+  depends_on:
+  - FND-003
+  acceptance:
+  - put/get/head/delete-if-policy mediante adapter
+  - Keys incorporan tenant/project y content-addressing donde aplique
+  - API no depende del SDK S3 directamente
+  tests:
+  - MinIO integration
+  - checksum roundtrip
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-007
+  title: Job queue abstraction
+  goal: Encapsular Redis queue/locks/retries detrás de interfaz de jobs.
+  depends_on:
+  - FND-005
+  acceptance:
+  - API encola sin conocer implementación Redis
+  - Jobs soportan idempotency key y retry policy
+  - Dead-letter/failure state observable
+  tests:
+  - queue integration
+  - idempotency
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-008
+  title: Error envelope y correlation IDs
+  goal: Estandarizar errores API y trazabilidad request→job→event.
+  depends_on:
+  - FND-001
+  acceptance:
+  - Errores tienen code/message/correlation_id
+  - Correlation ID se propaga a logs/jobs
+  - No se exponen stack traces en producción
+  tests:
+  - API error contract
+  - trace propagation
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-009
+  title: OpenAPI como contrato verificado
+  goal: Hacer que la spec generada y `specs/openapi.yaml` no deriven silenciosamente.
+  depends_on:
+  - FND-008
+  acceptance:
+  - CI detecta contract drift
+  - Schemas incluyen ejemplos y errores comunes
+  - Breaking changes exigen versioning/ADR
+  tests:
+  - OpenAPI snapshot
+  - contract tests
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-010
+  title: Session/auth boundary frontend
+  goal: Preparar frontend para identity provider reemplazable y tenant/project switching.
+  depends_on:
+  - FND-001
+  - FND-002
+  acceptance:
+  - UI no hardcodea usuario/tenant
+  - API client adjunta contexto autorizado
+  - 401/403 tienen UX controlada
+  tests:
+  - frontend unit
+  - E2E auth stub
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-011
+  title: Feature flags
+  goal: Conectar config de feature flags a backend y frontend con defaults seguros.
+  depends_on:
+  - FND-001
+  acceptance:
+  - Flags pueden scopearse global/tenant/proyecto cuando proceda
+  - Features desactivadas no ejecutan writes ocultos
+  - Estado del flag es auditable para cambios administrativos
+  tests:
+  - unit flag evaluation
+  - E2E disabled feature
+  priority: SHOULD
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-012
+  title: Observabilidad baseline
+  goal: Instrumentar logs estructurados, métricas y tracing OpenTelemetry.
+  depends_on:
+  - FND-008
+  acceptance:
+  - Logs incluyen service, tenant/project cuando seguro, correlation_id
+  - HTTP y worker jobs emiten métricas básicas
+  - Trace cruza API→queue→worker
+  tests:
+  - otel smoke
+  - log schema test
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-013
+  title: Health/readiness/dependency checks
+  goal: Separar liveness, readiness y health de dependencias.
+  depends_on:
+  - FND-006
+  - FND-007
+  - FND-012
+  acceptance:
+  - Liveness no depende de servicios externos
+  - Readiness falla si DB/queue crítica no está disponible
+  - Endpoints documentados y testeados
+  tests:
+  - container health integration
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-014
+  title: CI quality gates
+  goal: Endurecer CI con lint, typecheck, unit, integration, contract y harness verification.
+  depends_on:
+  - AUD-003
+  - FND-003
+  - FND-009
+  acceptance:
+  - PR falla ante lint/type/test/contract drift
+  - Caches no ocultan fallos
+  - Artifacts de test quedan disponibles
+  tests:
+  - CI dry run/local parity
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-015
+  title: Bootstrap reproducible de desarrollo
+  goal: Hacer que un clon limpio arranque con pasos mínimos y diagnósticos claros.
+  depends_on:
+  - FND-003
+  - FND-006
+  - FND-007
+  - FND-013
+  acceptance:
+  - Quickstart comprobado desde entorno limpio
+  - '`make dev` crea dependencias necesarias sin datos reales'
+  - '`make clean` no borra artefactos fuera del repo'
+  tests:
+  - clean bootstrap smoke
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: FND-016
+  title: Suite de aislamiento multi-tenant
+  goal: Crear tests negativos sistemáticos para todos los recursos base.
+  depends_on:
+  - FND-001
+  - FND-002
+  - FND-014
+  acceptance:
+  - Lectura/escritura/listado cross-tenant denegados
+  - IDs válidos de otro tenant no filtran metadatos
+  - Suite se ejecuta en CI
+  tests:
+  - security integration matrix
+  priority: MUST
+  target: MVP
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: BIM-001
+  title: Dominio Model y ModelRevision
+  goal: Formalizar modelos y revisiones IFC inmutables con estados.
+  depends_on:
+  - FND-003
+  - FND-004
+  acceptance:
+  - ModelRevision es inmutable respecto al archivo fuente
+  - Estados upload/queued/processing/ready/failed definidos
+  - Unique constraints evitan duplicados accidentales
+  tests:
+  - domain unit
+  - migration integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-002
+  title: Upload IFC streaming
+  goal: Implementar endpoint de upload sin cargar el archivo completo en memoria.
+  depends_on:
+  - BIM-001
+  - FND-006
+  - FND-008
+  acceptance:
+  - Límite de tamaño configurable
+  - Extensión/MIME no se usa como única validación
+  - Upload incompleto no crea revisión ready
+  tests:
+  - API upload integration
+  - large stream test
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-003
+  title: Checksum y almacenamiento inmutable
+  goal: Persistir SHA-256/tamaño/storage key y deduplicación segura.
+  depends_on:
+  - BIM-002
+  acceptance:
+  - Checksum calculado durante streaming
+  - Objeto fuente no se sobreescribe
+  - Misma revisión conserva provenance de filename y hash
+  tests:
+  - storage roundtrip
+  - duplicate upload test
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-004
+  title: Encolar ingest request
+  goal: Publicar ModelRevisionIngestRequested después del commit.
+  depends_on:
+  - BIM-003
+  - FND-005
+  - FND-007
+  acceptance:
+  - Evento cumple JSON schema existente
+  - Job contiene revision_id, no datos binarios
+  - Reintentos no crean revisiones duplicadas
+  tests:
+  - event contract
+  - queue integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-005
+  title: State machine idempotente del worker
+  goal: Hacer procesamiento seguro ante retries/crashes.
+  depends_on:
+  - BIM-004
+  acceptance:
+  - Un revision_id no genera elementos duplicados
+  - Locks/leases evitan doble procesamiento peligroso
+  - Failure conserva error estructurado y retry_count
+  tests:
+  - worker idempotency
+  - crash/retry integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-006
+  title: Detección IFC schema
+  goal: Usar IfcOpenShell para detectar/validar IFC2x3/IFC4/IFC4.3 soportado.
+  depends_on:
+  - BIM-005
+  acceptance:
+  - Schema real persistido
+  - Schema no soportado produce error accionable
+  - Tiny fixture procesa determinísticamente
+  tests:
+  - parser unit
+  - golden IFC schema
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-007
+  title: Índice básico de IfcProduct
+  goal: Extraer GlobalId, class, name, object type y tag por revisión.
+  depends_on:
+  - BIM-006
+  acceptance:
+  - Unique `(revision_id, global_id)` enforced
+  - No se usa express id/mesh id como identidad estable
+  - Element count reproducible para fixture
+  tests:
+  - worker extraction golden
+  - DB integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-008
+  title: Jerarquía espacial y storeys
+  goal: Normalizar Project/Site/Building/Storey/container relationships.
+  depends_on:
+  - BIM-007
+  acceptance:
+  - Elementos resolvibles por storey/container
+  - Casos sin storey no rompen ingest
+  - Jerarquía conserva IDs/provenance IFC
+  tests:
+  - spatial fixture tests
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-009
+  title: Property sets normalizados
+  goal: Extraer Psets con tipos, valores y origen sin perder valor raw.
+  depends_on:
+  - BIM-007
+  acceptance:
+  - Pset/property names preservados
+  - Valores complejos no provocan ingest crash
+  - Consultas por propiedad básica posibles
+  tests:
+  - pset golden tests
+  - query integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-010
+  title: Base quantities y QTO IFC
+  goal: Extraer IfcElementQuantity y cantidades explícitas con unidad/source.
+  depends_on:
+  - BIM-007
+  acceptance:
+  - Quantity almacena value+unit+source
+  - No confundir property numérica con quantity sin provenance
+  - Duplicados se resuelven determinísticamente
+  tests:
+  - quantity golden tests
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-011
+  title: Clasificaciones IFC
+  goal: Extraer IfcClassificationReference/associations como links first-class.
+  depends_on:
+  - BIM-007
+  acceptance:
+  - System/code/name/source persistidos
+  - Un elemento admite múltiples clasificaciones
+  - API puede filtrar por sistema/código
+  tests:
+  - classification fixture
+  - API filter integration
+  priority: SHOULD
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-012
+  title: Normalización de unidades
+  goal: Resolver unidades de proyecto y representar SI/canonical + original cuando sea necesario.
+  depends_on:
+  - BIM-006
+  - BIM-010
+  acceptance:
+  - Conversión es determinista y testeada
+  - Unidad original se conserva
+  - Unidades incompatibles fallan explícitamente
+  tests:
+  - unit conversion property tests
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-013
+  title: Metadata geométrica
+  goal: Calcular bbox/centroid/representation hints sin acoplar renderer.
+  depends_on:
+  - BIM-007
+  acceptance:
+  - Bbox/centroid almacenables por elemento o artifact index
+  - Cálculo pesado permanece en worker
+  - Resultados tienen CRS/local-coordinate semantics documentadas
+  tests:
+  - geometry metadata golden
+  priority: SHOULD
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-014
+  title: Errores y retry de ingestión
+  goal: Modelar errores de parse/storage/validation por stage.
+  depends_on:
+  - BIM-005
+  - BIM-006
+  acceptance:
+  - UI/API obtiene stage/code/message seguro
+  - Errores transitorios pueden retry; permanentes no hacen loop
+  - Retry manual es auditable
+  tests:
+  - failure injection integration
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-015
+  title: Element query API
+  goal: Exponer listado/detalle/filtros paginados para elementos de una revisión.
+  depends_on:
+  - BIM-008
+  - BIM-009
+  - BIM-010
+  - BIM-011
+  - FND-009
+  acceptance:
+  - Filtros por class/name/storey/classification
+  - Pagination estable
+  - Toda respuesta scopeada a tenant/project/revision
+  tests:
+  - API contract
+  - query performance smoke
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-016
+  title: Revision summary y métricas
+  goal: Exponer estado, counts, clases, storeys, warnings y artifacts.
+  depends_on:
+  - BIM-014
+  - BIM-015
+  acceptance:
+  - Summary no escanea millones de rows por request
+  - Counts quedan consistentes con ingest final
+  - Failed revisions muestran diagnóstico
+  tests:
+  - summary integration
+  - query plan check
+  priority: SHOULD
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-017
+  title: Golden IFC regression suite
+  goal: Congelar resultados esperados de fixtures para identity, Psets, QTO y spatial tree.
+  depends_on:
+  - BIM-012
+  - BIM-015
+  - AUD-007
+  acceptance:
+  - Golden manifest tiene checksums
+  - Cambio de output requiere revisión explícita
+  - Suite detecta pérdida de GlobalId/cantidades
+  tests:
+  - golden regression
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: BIM-018
+  title: Benchmark de ingestión grande
+  goal: Medir memoria/tiempo/throughput con dataset representativo.
+  depends_on:
+  - BIM-017
+  - AUD-005
+  acceptance:
+  - Reporte incluye tamaño, elements, peak RSS, wall time
+  - No hay crecimiento de memoria no acotado por request API
+  - Bottlenecks priorizados con evidencia
+  tests:
+  - performance benchmark
+  priority: SHOULD
+  target: Beta
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: VWR-001
+  title: Benchmark y ADR de viewer
+  goal: Evaluar opciones de renderer/adapters con dataset y necesidades de federación.
+  depends_on:
+  - BIM-017
+  - AUD-005
+  acceptance:
+  - Matriz compara rendimiento, selección, clipping, licensing, extensibilidad
+  - PoC carga dataset objetivo
+  - ADR selecciona opción y fallback
+  tests:
+  - viewer benchmark
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-002
+  title: Implementar ViewerAdapter de producción
+  goal: Crear implementación concreta sin filtrar vendor al dominio/UI de negocio.
+  depends_on:
+  - VWR-001
+  acceptance:
+  - ViewerAdapter cumple contrato existente
+  - UI consume adapter, no SDK directo fuera de módulo viewer
+  - Lifecycle dispose/reload testeado
+  tests:
+  - adapter unit
+  - frontend smoke
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-003
+  title: Contrato de geometry artifacts
+  goal: Definir manifest/version/checksum/chunks/identity map para geometría optimizada.
+  depends_on:
+  - VWR-001
+  - BIM-013
+  acceptance:
+  - Manifest versionado
+  - Cada primitive/chunk puede resolverse a GlobalId
+  - Artifacts content-addressable
+  tests:
+  - artifact schema contract
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: VWR-004
+  title: Pipeline worker de geometría
+  goal: Generar artifact consumible por viewer elegido.
+  depends_on:
+  - VWR-003
+  - FND-006
+  - FND-007
+  acceptance:
+  - Job asíncrono e idempotente
+  - Artifact status asociado a revision
+  - Source IFC permanece intacto
+  tests:
+  - geometry worker integration
+  - artifact checksum
+  priority: MUST
+  target: MVP
+  spec: model-ingestion
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/model-ingestion.md
+- id: VWR-005
+  title: Artifact manifest API
+  goal: Servir metadatos/URLs firmadas o proxy seguro para carga del viewer.
+  depends_on:
+  - VWR-004
+  - FND-009
+  acceptance:
+  - Tenant authorization antes de entregar artifact
+  - URLs tienen TTL si son firmadas
+  - Manifest cacheable sin filtrar credenciales
+  tests:
+  - API auth integration
+  - contract
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-006
+  title: Carga de un modelo real
+  goal: Sustituir placeholder por modelo IFC procesado.
+  depends_on:
+  - VWR-002
+  - VWR-005
+  acceptance:
+  - Modelo demo carga end-to-end
+  - Estados loading/error/ready visibles
+  - No bloquea main thread de forma significativa
+  tests:
+  - E2E viewer load
+  - visual smoke
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-007
+  title: Selección con identidad BIM estable
+  goal: Mapear clicks del renderer a `(revision_id, GlobalId)`.
+  depends_on:
+  - VWR-006
+  - BIM-015
+  acceptance:
+  - Selección devuelve identidad canonical
+  - Property panel usa API por GlobalId
+  - Reload no cambia identidad lógica
+  tests:
+  - selection E2E
+  - identity regression
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-008
+  title: Hide/isolate/show
+  goal: Implementar visibilidad por selección y conjuntos.
+  depends_on:
+  - VWR-007
+  acceptance:
+  - Hide/isolate opera sobre IDs canonical
+  - Reset restaura estado
+  - Miles de IDs se manejan sin request por elemento
+  tests:
+  - viewer behavior unit
+  - E2E
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-009
+  title: Property panel BIM
+  goal: Mostrar atributos, Psets, QTO, classifications y provenance.
+  depends_on:
+  - VWR-007
+  - BIM-009
+  - BIM-010
+  - BIM-011
+  acceptance:
+  - Panel diferencia property/quantity/classification
+  - Carga lazy/cancelable
+  - Valores/unidades legibles y raw accesible donde aplique
+  tests:
+  - frontend unit
+  - E2E property panel
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-010
+  title: Clipping y measurement tools
+  goal: Añadir section planes/box y medición con units del proyecto.
+  depends_on:
+  - VWR-006
+  - BIM-012
+  acceptance:
+  - Clipping no altera datos
+  - Mediciones muestran unidad explícita
+  - Herramientas se limpian al cambiar modelo/proyecto
+  tests:
+  - viewer interaction E2E
+  priority: SHOULD
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-011
+  title: Federación multi-modelo
+  goal: Cargar varias revisiones activas con transform/visibility independientes.
+  depends_on:
+  - VWR-007
+  acceptance:
+  - Cada selección incluye model/revision
+  - No colisionan GlobalIds entre revisions/models
+  - Unload de un modelo libera recursos
+  tests:
+  - federation E2E
+  - memory smoke
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-012
+  title: Cross-selection Viewer↔BOQ↔Gantt
+  goal: Crear selection store canonical y resolver links server-side.
+  depends_on:
+  - VWR-007
+  - VWR-011
+  acceptance:
+  - Una selección tiene source y canonical IDs
+  - No se usan índices de fila/mesh como vínculo persistente
+  - Paneles soportan one-to-many y many-to-many
+  tests:
+  - state unit
+  - cross-selection E2E
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-013
+  title: Progressive loading/performance
+  goal: Aplicar chunking/LOD/culling según capacidad del viewer.
+  depends_on:
+  - VWR-011
+  - BIM-018
+  acceptance:
+  - First-interaction cumple presupuesto objetivo
+  - Carga cancelable al cambiar contexto
+  - Métricas de FPS/load time capturadas
+  tests:
+  - viewer performance benchmark
+  priority: SHOULD
+  target: Beta
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: VWR-014
+  title: Visual regression y E2E del Work Area
+  goal: Fijar escenarios críticos del viewer y sincronización.
+  depends_on:
+  - VWR-012
+  - VWR-013
+  acceptance:
+  - Screenshots deterministas en fixture
+  - Tests cubren load/select/isolate/properties/cross-selection
+  - Flakiness documentada < umbral acordado
+  tests:
+  - Playwright E2E
+  - visual regression
+  priority: MUST
+  target: MVP
+  spec: work-area
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/work-area.md
+- id: BOQ-001
+  title: BOQ hierarchy y revisions
+  goal: Modelar capítulos/partidas y revisiones inmutables/aprobables.
+  depends_on:
+  - BIM-015
+  - FND-003
+  acceptance:
+  - Árbol BOQ soporta parent/order/code
+  - Revisión aprobada no se edita destructivamente
+  - Current revision es proyección explícita
+  tests:
+  - domain unit
+  - migration integration
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-002
+  title: CRUD de BOQ items
+  goal: Exponer operaciones con description/unit/quantity source y metadata.
+  depends_on:
+  - BOQ-001
+  - FND-009
+  acceptance:
+  - Validation de units/currency
+  - Orden jerárquico estable
+  - Authorization por proyecto/rol
+  tests:
+  - API contract
+  - authorization integration
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-003
+  title: Links manuales elemento↔BOQ
+  goal: Implementar `element_boq_links` con source/provenance/weight.
+  depends_on:
+  - BOQ-002
+  - BIM-015
+  acceptance:
+  - Many-to-many soportado
+  - Link guarda revision element identity y source=manual
+  - Unlink no borra histórico si política exige audit
+  tests:
+  - link integration
+  - cross-tenant negative
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-004
+  title: DSL/modelo de mapping rules
+  goal: Definir reglas por IFC class/Pset/classification/storey/etc.
+  depends_on:
+  - BOQ-003
+  acceptance:
+  - Reglas versionadas y validables antes de ejecutar
+  - No ejecutar código arbitrario
+  - Preview devuelve candidatos sin persistir
+  tests:
+  - rule parser unit
+  - security tests
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-005
+  title: Ejecución asíncrona de mapping rules
+  goal: Evaluar reglas sobre revisiones grandes y persistir provenance.
+  depends_on:
+  - BOQ-004
+  - FND-007
+  acceptance:
+  - Job idempotente
+  - Links rule-based guardan rule/version/confidence
+  - Re-run puede comparar cambios sin duplicar
+  tests:
+  - worker integration
+  - golden mapping
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-006
+  title: Modelo de quantity rules
+  goal: Definir quantity source/selector/formula/unit/rounding por partida.
+  depends_on:
+  - BOQ-002
+  - BIM-010
+  acceptance:
+  - Regla declara dimensión/unidad esperada
+  - Formula está sandboxed/whitelisted
+  - Provenance incluye inputs
+  tests:
+  - rule schema tests
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-007
+  title: Motor QTO reproducible
+  goal: Calcular cantidades agregadas desde links + quantities IFC/rules.
+  depends_on:
+  - BOQ-005
+  - BOQ-006
+  - BIM-012
+  acceptance:
+  - Mismo input produce mismo output
+  - Contribución por elemento trazable
+  - Errores de unidad no se silencian
+  tests:
+  - golden QTO
+  - property-based aggregation
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-008
+  title: Conversiones de unidad 5D
+  goal: Gestionar conversiones y precision/rounding por BOQ.
+  depends_on:
+  - BOQ-007
+  acceptance:
+  - No sumar dimensiones incompatibles
+  - Display y stored canonical definidos
+  - Rounding solo en capa definida, no acumulativo
+  tests:
+  - unit conversion tests
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-009
+  title: Cantidades importadas y override
+  goal: Permitir quantity externa/manual sin perder QTO calculado.
+  depends_on:
+  - BOQ-007
+  acceptance:
+  - Source IFC/rule/import/manual explícito
+  - Override requiere razón/actor cuando aplique
+  - Comparación calculated vs approved disponible
+  tests:
+  - domain tests
+  - audit integration
+  priority: SHOULD
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-010
+  title: Rate catalogs
+  goal: Modelar precios unitarios por vigencia, moneda y source.
+  depends_on:
+  - BOQ-002
+  acceptance:
+  - Rate tiene effective date/currency/source
+  - No sobrescribir rate histórico
+  - Asignación a item es versionada o auditable
+  tests:
+  - rate domain
+  - currency validation
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-011
+  title: Cost revisions y budgets
+  goal: Separar estimate/budget/approved/forecast y revisiones.
+  depends_on:
+  - BOQ-001
+  - BOQ-010
+  acceptance:
+  - Approved budget immutable
+  - Forecast puede evolucionar sin cambiar baseline
+  - Amounts usan decimal+currency
+  tests:
+  - cost revision unit
+  - migration integration
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-012
+  title: Cálculo de importes y rollups
+  goal: Calcular quantity×rate, allowances y rollup por jerarquía.
+  depends_on:
+  - BOQ-008
+  - BOQ-010
+  - BOQ-011
+  acceptance:
+  - Totals reconciliables a nivel hoja/root
+  - Decimal precision consistente
+  - No mezclar monedas sin FX policy explícita
+  tests:
+  - golden cost totals
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-013
+  title: API de trazabilidad 5D
+  goal: Resolver BOQ item→elementos y elemento→partidas/costes.
+  depends_on:
+  - BOQ-003
+  - BOQ-012
+  acceptance:
+  - Endpoints paginados
+  - Incluyen provenance de link y quantity
+  - Soportan selección cruzada eficiente
+  tests:
+  - API contract
+  - query performance
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-014
+  title: Import/export CSV/XLSX
+  goal: Crear adaptadores de tabulares con preview/validation.
+  depends_on:
+  - BOQ-002
+  - BOQ-010
+  acceptance:
+  - Import tiene dry-run y reporte de errores por fila
+  - Export conserva codes/units/rates
+  - No permite formula injection peligrosa en export
+  tests:
+  - import fixture
+  - security spreadsheet tests
+  priority: SHOULD
+  target: Beta
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-015
+  title: UI BOQ tree/editor
+  goal: Reemplazar demo por árbol real con filtros, totals y selection sync.
+  depends_on:
+  - BOQ-013
+  - VWR-012
+  acceptance:
+  - Virtualización para listas grandes
+  - Editar respeta roles/revision state
+  - Click sincroniza Viewer/Gantt cuando links existen
+  tests:
+  - frontend unit
+  - E2E 5D sync
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: BOQ-016
+  title: Golden suite 5D
+  goal: Congelar mapping/QTO/cost outputs sobre fixtures.
+  depends_on:
+  - BOQ-015
+  - AUD-007
+  acceptance:
+  - Expected quantities y amounts versionados
+  - Cambios de regla muestran diff intencional
+  - CI detecta regresiones de unidades/provenance
+  tests:
+  - golden 5D regression
+  priority: MUST
+  target: MVP
+  spec: boq-5d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/boq-5d.md
+- id: SCH-001
+  title: WBS hierarchy
+  goal: Modelar WBS nodes ordenables y scopeados a schedule revision.
+  depends_on:
+  - FND-003
+  - FND-001
+  acceptance:
+  - Árbol soporta code/name/parent/order
+  - No ciclos
+  - WBS revision/history strategy documentada
+  tests:
+  - domain tree tests
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-002
+  title: Activity CRUD
+  goal: Crear actividades con ID externo, duration, type y WBS.
+  depends_on:
+  - SCH-001
+  - FND-009
+  acceptance:
+  - Activity ID único dentro del schedule
+  - Duration usa unidad/calendar semantics explícitas
+  - Authorization aplicado
+  tests:
+  - API contract
+  - domain validation
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-003
+  title: Calendars y working time
+  goal: Implementar calendarios, excepciones y timezone de proyecto.
+  depends_on:
+  - SCH-002
+  acceptance:
+  - Working/non-working intervals deterministas
+  - DST/timezone cubierto donde aplique
+  - Calendars asignables a activity/project
+  tests:
+  - calendar golden tests
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-004
+  title: Activity relationships
+  goal: Modelar FS/SS/FF/SF con lag/lead.
+  depends_on:
+  - SCH-002
+  acceptance:
+  - Tipos válidos enumerados
+  - No relaciones self
+  - Lag usa schedule duration semantics
+  tests:
+  - relationship unit
+  - cycle fixture
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-005
+  title: CPM forward pass
+  goal: Calcular ES/EF respetando calendars y relationships.
+  depends_on:
+  - SCH-003
+  - SCH-004
+  acceptance:
+  - Casos FS/SS/FF/SF simples pasan
+  - Calendario afecta fechas correctamente
+  - Resultado reproducible
+  tests:
+  - CPM golden forward
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-006
+  title: CPM backward pass y float
+  goal: Calcular LS/LF/total/free float y criticality.
+  depends_on:
+  - SCH-005
+  acceptance:
+  - Critical path consistente con float policy
+  - Project finish definido
+  - No muta inputs durante cálculo
+  tests:
+  - CPM golden backward
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-007
+  title: Constraints y milestones
+  goal: Añadir milestones y restricciones soportadas con warnings.
+  depends_on:
+  - SCH-006
+  acceptance:
+  - Constraints tienen tipo/date/provenance
+  - Conflictos reportan diagnóstico
+  - Milestone duration 0 preservada
+  tests:
+  - constraint cases
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-008
+  title: Data date y status semantics
+  goal: Definir fecha de estado y actual start/finish/remaining duration.
+  depends_on:
+  - SCH-007
+  acceptance:
+  - Data date explícita por schedule status
+  - Actuals no se inferirán silenciosamente
+  - Recalculation conserva historical snapshot policy
+  tests:
+  - statusing golden
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-009
+  title: Import schedule CSV
+  goal: Implementar import tabular con preview y mapping de columnas.
+  depends_on:
+  - SCH-004
+  acceptance:
+  - Dry-run y errores por fila
+  - IDs/relationships resueltos en dos fases
+  - Import idempotente mediante external IDs/revision policy
+  tests:
+  - CSV fixture integration
+  priority: SHOULD
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-010
+  title: MS Project adapter contract
+  goal: Definir adapter para import/export MS Project sin acoplar core.
+  depends_on:
+  - SCH-009
+  acceptance:
+  - Interface + mapping docs
+  - Unsupported fields reportados
+  - No dependencia vendor dentro de domain
+  tests:
+  - contract tests with fixture stub
+  priority: COULD
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-011
+  title: Primavera P6 adapter contract
+  goal: Definir adapter XER/XML/API para P6 con mapping explícito.
+  depends_on:
+  - SCH-009
+  acceptance:
+  - Mapping WBS/activity/calendar/relationship documentado
+  - External IDs preservados
+  - Import errors no crean schedule parcial sin estrategia
+  tests:
+  - adapter contract tests
+  priority: SHOULD
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-012
+  title: Schedule baselines
+  goal: Crear snapshots inmutables de fechas/durations y metadata.
+  depends_on:
+  - SCH-008
+  acceptance:
+  - Baseline aprobada no se edita
+  - Comparación current vs baseline eficiente
+  - Baseline id aparece en EVM posterior
+  tests:
+  - baseline domain
+  - API integration
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-013
+  title: What-if scenarios
+  goal: Permitir escenarios derivados sin alterar schedule publicado.
+  depends_on:
+  - SCH-012
+  acceptance:
+  - Scenario referencia base revision
+  - Cambios son aislados y descartables/promovibles
+  - Recalc independiente
+  tests:
+  - scenario isolation tests
+  priority: SHOULD
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-014
+  title: Schedule query/Gantt API
+  goal: Exponer WBS/activities/relationships/range de forma eficiente.
+  depends_on:
+  - SCH-006
+  - SCH-008
+  - SCH-012
+  acceptance:
+  - Query por ventana/IDs
+  - Payload evita N+1
+  - Critical/baseline fields disponibles
+  tests:
+  - API performance
+  - contract
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-015
+  title: Gantt UI real
+  goal: Implementar grid+timeline con zoom Day/Week/Month/Qtr y filtros.
+  depends_on:
+  - SCH-014
+  - VWR-012
+  acceptance:
+  - Virtualización para schedule objetivo
+  - Critical/baseline/status visibles
+  - Selection sync usa Activity IDs canonical
+  tests:
+  - frontend unit
+  - Gantt E2E
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: SCH-016
+  title: Golden CPM suite
+  goal: Cubrir redes pequeñas/medianas, calendars, lag y constraints.
+  depends_on:
+  - SCH-015
+  - AUD-007
+  acceptance:
+  - Expected ES/EF/LS/LF/float versionados
+  - Incluye ciclos/error cases
+  - CI evita regresión matemática
+  tests:
+  - CPM regression suite
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-001
+  title: Links elemento↔actividad
+  goal: Implementar many-to-many con role/source/provenance.
+  depends_on:
+  - BIM-015
+  - SCH-002
+  - VWR-012
+  acceptance:
+  - Roles construct/demolish/temporary/reference
+  - Links pueden ser manual/rule/import
+  - Cross-selection bidireccional
+  tests:
+  - link integration
+  - authorization
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-002
+  title: Motor de estados 4D
+  goal: Derivar estado visual de cada link para una simulation date.
+  depends_on:
+  - D4-001
+  - SCH-008
+  acceptance:
+  - Estados not-started/in-progress/completed/removed definidos
+  - Motor puro y determinista
+  - No persiste un estado por fecha innecesariamente
+  tests:
+  - state engine unit
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-003
+  title: Timeline controls
+  goal: Crear simulation date, play/pause/speed/step/today.
+  depends_on:
+  - D4-002
+  - SCH-015
+  acceptance:
+  - Scrub actualiza estado sin reload completo
+  - Play se cancela al cambiar proyecto
+  - Date semantics usa project timezone
+  tests:
+  - frontend timer unit
+  - E2E scrub
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-004
+  title: Color/status legend
+  goal: Aplicar esquema configurable de estados y selected/critical overlays.
+  depends_on:
+  - D4-002
+  - VWR-008
+  acceptance:
+  - Legend accesible
+  - Selección no pierde estado 4D
+  - Colores/theme no se hardcodean en domain
+  tests:
+  - visual regression
+  priority: MUST
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-005
+  title: Incremental 4D updates
+  goal: Actualizar solo elementos cuyo estado cambia entre fechas.
+  depends_on:
+  - D4-003
+  - D4-004
+  acceptance:
+  - No full recolor para cada tick en modelo grande
+  - Delta derivable de activity boundaries
+  - Performance metric capturada
+  tests:
+  - performance unit/benchmark
+  priority: SHOULD
+  target: MVP
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-006
+  title: 4D federado
+  goal: Simular varios modelos/revisiones activos con un mismo schedule.
+  depends_on:
+  - D4-001
+  - VWR-011
+  - D4-005
+  acceptance:
+  - Links preservan model/revision identity
+  - Unload model limpia state
+  - Conflictos de calendario/scope diagnosticados
+  tests:
+  - federated 4D E2E
+  priority: SHOULD
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-007
+  title: Planned vs actual visual
+  goal: Añadir overlay on-time/ahead/delayed/completed usando status data.
+  depends_on:
+  - D4-002
+  - SCH-008
+  acceptance:
+  - Reglas documentadas y reproducibles
+  - Sin actuals se muestra unknown, no se inventa estado
+  - Legend diferencia schedule state vs variance
+  tests:
+  - state variance unit
+  - visual E2E
+  priority: SHOULD
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: D4-008
+  title: 4D E2E y performance gate
+  goal: Fijar un escenario completo upload→schedule→links→simulation.
+  depends_on:
+  - D4-006
+  - D4-007
+  acceptance:
+  - E2E determinista
+  - FPS/update latency bajo presupuesto acordado
+  - Regression artifacts en CI
+  tests:
+  - Playwright E2E
+  - viewer performance
+  priority: MUST
+  target: Beta
+  spec: schedule-4d
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/schedule-4d.md
+- id: PRG-001
+  title: ProgressRecord append-only
+  goal: Formalizar capturas físicas con data date, source, actor y evidence.
+  depends_on:
+  - BOQ-016
+  - SCH-012
+  - FND-004
+  acceptance:
+  - No update destructivo de historical record
+  - Corrección se modela como nuevo record/supersession
+  - Scope a activity/element/BOQ explícito
+  tests:
+  - domain history tests
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-002
+  title: API de captura de progreso
+  goal: Crear endpoints batch/manual con validation y approval states.
+  depends_on:
+  - PRG-001
+  - FND-009
+  acceptance:
+  - Batch atomicity policy definida
+  - No superar quantity total sin regla explícita
+  - Writes auditados
+  tests:
+  - API integration
+  - authorization
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-003
+  title: Physical progress por cantidad
+  goal: Derivar installed/total/% desde quantities y links.
+  depends_on:
+  - PRG-002
+  - BOQ-007
+  - D4-001
+  acceptance:
+  - Denominador/version de quantity explícito
+  - Double counting prevenido
+  - Resultado trazable a records
+  tests:
+  - golden progress calculations
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-004
+  title: Resources y crews
+  goal: Modelar labor/equipment/material/crew assignment.
+  depends_on:
+  - SCH-002
+  acceptance:
+  - Resource types extensibles
+  - Assignments many-to-many con units
+  - No mezclar resource catalog con actual usage
+  tests:
+  - domain assignment tests
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-005
+  title: Productivity rates
+  goal: Registrar output por resource/crew/time y rate assumptions versionadas.
+  depends_on:
+  - PRG-004
+  - BOQ-008
+  acceptance:
+  - Rate tiene unit numerator/denominator
+  - Source/effective period explícito
+  - Conversiones dimensionales validadas
+  tests:
+  - productivity unit tests
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-006
+  title: Forecast de duración por productividad
+  goal: Calcular remaining duration explainable desde remaining quantity y crew.
+  depends_on:
+  - PRG-003
+  - PRG-005
+  - SCH-003
+  acceptance:
+  - Formula e inputs devueltos
+  - Calendars aplicados
+  - Fallback cuando faltan rates es explicit unknown/manual
+  tests:
+  - forecast golden
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-007
+  title: Planned Value timephasing
+  goal: Distribuir budget baseline sobre actividades/periodos con policy explícita.
+  depends_on:
+  - BOQ-011
+  - SCH-012
+  - D4-001
+  acceptance:
+  - PV siempre referencia cost+schedule baseline IDs
+  - Timephasing policy versionada
+  - No se recalcula histórico silenciosamente
+  tests:
+  - PV golden curve
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-008
+  title: Earned Value
+  goal: Calcular EV desde reglas de earning/progreso físico.
+  depends_on:
+  - PRG-003
+  - PRG-007
+  acceptance:
+  - Earning rule explícita
+  - EV no excede BAC sin autorización/regla
+  - Trazabilidad a progress records
+  tests:
+  - EV golden calculations
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-009
+  title: Actual cost/commitments interface
+  goal: Definir dominio/adapters para AC, commitments e invoices sin acoplar ERP.
+  depends_on:
+  - BOQ-011
+  - FND-005
+  acceptance:
+  - Cost actual source y accounting date explícitos
+  - Adapter contract versionado
+  - Manual/demo ingestion disponible para tests
+  tests:
+  - cost adapter contract
+  - integration fixture
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-010
+  title: EVM KPIs y forecast
+  goal: Calcular CPI/SPI/EAC/ETC/VAC con policies seleccionables/documentadas.
+  depends_on:
+  - PRG-008
+  - PRG-009
+  acceptance:
+  - Fórmulas identifican método
+  - Zero/undefined denominators manejados
+  - Data date y baseline IDs siempre presentes
+  tests:
+  - EVM formula golden
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-011
+  title: S-curves y dashboard project controls
+  goal: Exponer series PV/EV/AC y KPIs con filtros.
+  depends_on:
+  - PRG-010
+  acceptance:
+  - Series agregadas sin recalcular raw rows por request
+  - Timezone/period granularity consistente
+  - Dashboard indica data date y currency
+  tests:
+  - API perf
+  - frontend E2E
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: PRG-012
+  title: Golden suite progreso/EVM
+  goal: Congelar dataset completo quantity→progress→EVM.
+  depends_on:
+  - PRG-011
+  - AUD-007
+  acceptance:
+  - Expected curves/KPIs versionados
+  - Incluye corrections y missing data
+  - CI detecta regresión de formulas
+  tests:
+  - golden EVM regression
+  priority: SHOULD
+  target: Beta
+  spec: progress-evm
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/progress-evm.md
+- id: COL-001
+  title: Issues y comments
+  goal: Implementar issue lifecycle, assignment, priority/status y comentarios.
+  depends_on:
+  - VWR-014
+  - FND-004
+  acceptance:
+  - Issue scopeado a proyecto y opcionalmente elementos/activities
+  - State transitions validadas
+  - Comments append-only/auditados
+  tests:
+  - domain workflow
+  - API auth
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-002
+  title: Viewpoints y component selection
+  goal: Persistir cámara, clipping, snapshot refs y selected/visible components por GlobalId.
+  depends_on:
+  - COL-001
+  - VWR-007
+  - FND-006
+  acceptance:
+  - Viewpoint no depende de mesh IDs persistentes
+  - Snapshot en object storage
+  - Abrir viewpoint restaura contexto tolerando missing components
+  tests:
+  - viewpoint roundtrip E2E
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-003
+  title: BCF import/export
+  goal: Implementar round-trip BCF básico compatible con issues/viewpoints.
+  depends_on:
+  - COL-002
+  acceptance:
+  - Import no duplica issues en re-run según strategy
+  - Component IDs mapean a IFC GlobalIds
+  - Unsupported fields reportados
+  tests:
+  - BCF fixture roundtrip
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-004
+  title: QA/QC inspections y checklists
+  goal: Modelar templates, inspections, checks, result y approvals.
+  depends_on:
+  - COL-001
+  acceptance:
+  - Template versionado
+  - Inspection guarda quien/cuándo/qué versión
+  - Results linked a element/activity/location
+  tests:
+  - workflow unit
+  - API integration
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-005
+  title: NCR y punch workflows
+  goal: Añadir no-conformance/punch con corrective action y closure.
+  depends_on:
+  - COL-004
+  acceptance:
+  - State machine explícita
+  - Closure puede exigir evidence/approval
+  - Historial no destructivo
+  tests:
+  - workflow transition tests
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-006
+  title: Evidence attachments
+  goal: Adjuntar fotos/documentos con metadata, virus-scan adapter y access control.
+  depends_on:
+  - COL-004
+  - FND-006
+  acceptance:
+  - Object access autorizado
+  - Metadata/hash/audit persistidos
+  - Quarantine/scanning interface existe aunque proveedor sea stub
+  tests:
+  - storage auth
+  - upload security
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: COL-007
+  title: IDS validation jobs
+  goal: Ejecutar IDS validation asíncrona y vincular findings a GlobalIds.
+  depends_on:
+  - BIM-017
+  - FND-007
+  acceptance:
+  - IDS/source revision versionados
+  - Results pass/fail/not-applicable trazables
+  - Job no modifica IFC
+  tests:
+  - IDS fixture golden
+  - worker integration
+  priority: SHOULD
+  target: Beta
+  spec: ids-validation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/ids-validation.md
+- id: COL-008
+  title: Notifications y workflow events
+  goal: Emitir eventos/notificaciones para assignments, failures y approvals.
+  depends_on:
+  - COL-001
+  - COL-005
+  - FND-005
+  acceptance:
+  - Preferencias/recipient resolution separadas del dominio
+  - Events versionados
+  - Retries no duplican side effects visibles
+  tests:
+  - event contract
+  - notification idempotency
+  priority: SHOULD
+  target: Beta
+  spec: bcf-qa
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/bcf-qa.md
+- id: ADV-001
+  title: Revision diff por identidad y propiedades
+  goal: 'Comparar dos ModelRevisions: added/removed/common/changed.'
+  depends_on:
+  - BIM-017
+  acceptance:
+  - Diff es async para modelos grandes
+  - Cambios de properties/geometry metadata diferenciados
+  - Resultados referencian ambas revisiones
+  tests:
+  - diff golden fixture
+  priority: COULD
+  target: Post-Beta
+  spec: clash-diff
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/clash-diff.md
+- id: ADV-002
+  title: Lineage candidate matching
+  goal: Proponer continuidad cuando GlobalId cambia usando señales geométricas/semánticas.
+  depends_on:
+  - ADV-001
+  - BIM-013
+  acceptance:
+  - Cada candidate tiene method/confidence/evidence
+  - No autoaceptar por debajo del threshold configurado
+  - Algoritmo determinista o seeded
+  tests:
+  - lineage golden cases
+  priority: COULD
+  target: Post-Beta
+  spec: clash-diff
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/clash-diff.md
+- id: ADV-003
+  title: Manual lineage remap
+  goal: Permitir aceptar/rechazar/crear mappings con override auditado.
+  depends_on:
+  - ADV-002
+  - FND-004
+  acceptance:
+  - Manual override tiene actor/reason
+  - Remap no reescribe revisiones antiguas
+  - Downstream links pueden migrarse con preview
+  tests:
+  - remap integration
+  - audit test
+  priority: COULD
+  target: Post-Beta
+  spec: clash-diff
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/clash-diff.md
+- id: ADV-004
+  title: Clash engine adapter/orchestration
+  goal: Definir clash sets, job contract y results desacoplados del engine.
+  depends_on:
+  - VWR-011
+  - FND-007
+  acceptance:
+  - Clash result referencia canonical element identities
+  - Engine reemplazable
+  - Results deduplicables/versionados
+  tests:
+  - adapter contract
+  - fixture results
+  priority: COULD
+  target: Post-Beta
+  spec: clash-diff
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/clash-diff.md
+- id: ADV-005
+  title: CRS y georreferenciación
+  goal: Persistir CRS/project transforms y validar georef de modelos.
+  depends_on:
+  - BIM-008
+  acceptance:
+  - CRS identificado por estándar/código cuando posible
+  - Transform chain documentada
+  - Warnings para coordenadas sospechosas
+  tests:
+  - georef fixtures
+  priority: COULD
+  target: Post-Beta
+  spec: gis
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/gis.md
+- id: ADV-006
+  title: Parcel/setback analysis
+  goal: Representar parcelas y comprobar setbacks con PostGIS/engine adapter.
+  depends_on:
+  - ADV-005
+  acceptance:
+  - Inputs CRS-compatible
+  - Resultados incluyen geometría/evidence y rule version
+  - No confundir análisis con cumplimiento legal definitivo
+  tests:
+  - spatial golden tests
+  priority: COULD
+  target: Post-Beta
+  spec: gis
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/gis.md
+- id: ADV-007
+  title: Search indexing
+  goal: Añadir search adapter solo para casos que exceden PostgreSQL y mantener index async.
+  depends_on:
+  - BIM-015
+  - FND-005
+  acceptance:
+  - Search results tenant-filtered
+  - Index rebuildable desde system of record
+  - Lag/index status observable
+  tests:
+  - search contract
+  - tenant isolation
+  priority: COULD
+  target: Post-Beta
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ADV-008
+  title: AI copilot read-only y grounded
+  goal: Crear interfaz de asistencia read-only sobre APIs autorizadas con citations/provenance.
+  depends_on:
+  - BOQ-016
+  - SCH-016
+  - PRG-012
+  - COL-007
+  acceptance:
+  - No acceso directo cross-tenant
+  - Cada respuesta basada en recursos retornados por tools/services
+  - Writes deshabilitados en v1
+  - Vendor LLM detrás de adapter
+  tests:
+  - permission tests
+  - grounding eval fixtures
+  priority: COULD
+  target: Post-Beta
+  spec: ai-copilot
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/ai-copilot.md
+- id: ENT-001
+  title: OIDC SSO
+  goal: Integrar identity provider OIDC mediante adapter/configuración.
+  depends_on:
+  - FND-010
+  - FND-002
+  acceptance:
+  - Login/logout/token validation robustos
+  - Claims mapean a internal identity, no a permissions sin policy
+  - Local dev auth sigue disponible solo en dev
+  tests:
+  - auth integration
+  - security negative
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-002
+  title: SAML enterprise adapter
+  goal: Añadir SAML como opción sin alterar dominio de identidad.
+  depends_on:
+  - ENT-001
+  acceptance:
+  - Configuración por organization
+  - Metadata/cert rotation documentada
+  - Fallback/lockout recovery runbook
+  tests:
+  - SAML contract/integration stub
+  priority: SHOULD
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-003
+  title: ABAC y permisos por proyecto
+  goal: Extender RBAC con atributos/ownership cuando casos enterprise lo exijan.
+  depends_on:
+  - ENT-001
+  - FND-016
+  acceptance:
+  - Policy decisions centralizadas
+  - Deny by default
+  - Tests de matrix por rol+atributo
+  tests:
+  - policy property tests
+  priority: SHOULD
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-004
+  title: PostgreSQL RLS defence-in-depth
+  goal: Evaluar/implementar RLS para tablas críticas si aporta seguridad sin romper jobs.
+  depends_on:
+  - ENT-003
+  acceptance:
+  - ADR justifica scope
+  - App y worker fijan tenant context correctamente
+  - Tests prueban bypass attempts
+  tests:
+  - RLS integration
+  priority: COULD
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-005
+  title: Secrets y encryption/KMS
+  goal: Eliminar secretos estáticos de runtime y definir cifrado/keys rotation.
+  depends_on:
+  - ENT-001
+  - FND-006
+  acceptance:
+  - Secrets fuera de repo/images
+  - TLS y at-rest policies documentadas
+  - Rotation no exige redeploy total cuando plataforma lo permite
+  tests:
+  - secret scan
+  - config tests
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-006
+  title: Rate limiting y security headers
+  goal: Endurecer edge/API contra abuso y uploads maliciosos.
+  depends_on:
+  - ENT-001
+  - AUD-006
+  acceptance:
+  - Rate limits por identity/tenant/endpoints sensibles
+  - Security headers configurados
+  - 413/429 manejados sin fuga de info
+  tests:
+  - DAST smoke
+  - rate limit integration
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-007
+  title: Backups, restore y DR
+  goal: Implementar backup de DB/object storage metadata y restauración probada.
+  depends_on:
+  - FND-006
+  - FND-003
+  acceptance:
+  - RPO/RTO definidos
+  - Restore drill automatizado/documentado
+  - Backups cifrados y access-controlled
+  tests:
+  - restore drill
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-008
+  title: HA y escalado de workers
+  goal: Validar API stateless y workers horizontales con job locking.
+  depends_on:
+  - BIM-018
+  - D4-008
+  acceptance:
+  - 2+ workers no duplican side effects
+  - Shutdown graceful
+  - Autoscaling metrics definidas
+  tests:
+  - concurrency/soak
+  priority: SHOULD
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-009
+  title: Retention y lifecycle de artifacts
+  goal: Definir conservación de IFC, geometry, snapshots, evidence y logs.
+  depends_on:
+  - FND-006
+  - COL-006
+  acceptance:
+  - Policy por artifact class
+  - Legal hold/approved baseline no se purga por error
+  - Deletes auditados y eventualmente verificados
+  tests:
+  - lifecycle policy tests
+  priority: SHOULD
+  target: Enterprise
+  spec: data-governance
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/DATA_GOVERNANCE.md
+- id: ENT-010
+  title: Webhooks firmados
+  goal: Exponer subscriptions con versioning, retry, signature y delivery log.
+  depends_on:
+  - FND-005
+  - FND-009
+  acceptance:
+  - HMAC/signature y replay protection
+  - Delivery idempotency key
+  - Backoff/dead-letter observable
+  tests:
+  - webhook contract
+  - security tests
+  priority: SHOULD
+  target: Enterprise
+  spec: integrations
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/INTEGRATIONS.md
+- id: ENT-011
+  title: Integration framework
+  goal: Crear sync cursors, external IDs, mapping tables y conflict strategy común.
+  depends_on:
+  - ENT-010
+  acceptance:
+  - Connectors no escriben dominio saltando services
+  - Sync state resumable
+  - Conflicts tienen report/manual resolution path
+  tests:
+  - connector harness tests
+  priority: SHOULD
+  target: Enterprise
+  spec: integrations
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/INTEGRATIONS.md
+- id: ENT-012
+  title: Autodesk/ACC adapter
+  goal: Implementar primer conector CDE/ACC detrás del framework, según credenciales de entorno.
+  depends_on:
+  - ENT-011
+  acceptance:
+  - OAuth/credentials aislados
+  - IDs externos preservados
+  - Rate limits/retries tratados
+  - Core compila sin SDK vendor
+  tests:
+  - contract tests
+  - sandbox integration when configured
+  priority: COULD
+  target: Enterprise
+  spec: integrations
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/INTEGRATIONS.md
+- id: ENT-013
+  title: ERP cost connector
+  goal: Implementar adapter genérico + primer mapping de commitments/actuals.
+  depends_on:
+  - ENT-011
+  - PRG-009
+  acceptance:
+  - Mapping currency/date/account codes explícito
+  - Reconciliation report disponible
+  - Import no duplica movimientos
+  tests:
+  - accounting fixture
+  - idempotency
+  priority: SHOULD
+  target: Enterprise
+  spec: integrations
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/INTEGRATIONS.md
+- id: ENT-014
+  title: Compliance export y audit search
+  goal: Crear export verificable de audit/issues/approvals por proyecto.
+  depends_on:
+  - FND-004
+  - COL-005
+  - ENT-009
+  acceptance:
+  - Export tiene manifest/checksum/time range
+  - Authorization fuerte
+  - No incluye secretos innecesarios
+  tests:
+  - export integration
+  - access control
+  priority: SHOULD
+  target: Enterprise
+  spec: security
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: docs/SECURITY_AND_COMPLIANCE.md
+- id: ENT-015
+  title: Load/soak/performance certification
+  goal: Ejecutar escenarios concurrentes de API, ingest, viewer artifacts y dashboards.
+  depends_on:
+  - ENT-008
+  - PRG-011
+  - VWR-013
+  acceptance:
+  - Resultados comparados con NFR budgets
+  - Bottlenecks tienen tickets/owners
+  - No memory leak sostenida observable
+  tests:
+  - k6 load
+  - worker soak
+  - viewer benchmark
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md
+- id: ENT-016
+  title: Production readiness y piloto
+  goal: Cerrar runbooks, alerts, on-call, migration plan y go/no-go checklist.
+  depends_on:
+  - ENT-005
+  - ENT-006
+  - ENT-007
+  - ENT-015
+  acceptance:
+  - Checklist go-live firmado
+  - Rollback/restore probado
+  - Dashboards/alerts cubren golden signals
+  - Known risks documentados
+  tests:
+  - game day
+  - pilot smoke
+  priority: MUST
+  target: Enterprise
+  spec: foundation
+  estimate: 0.5-1.5 d
+  notes: ''
+  spec_file: specs/features/foundation.md

@@ -1,0 +1,15 @@
+{
+  "generated": "2026-08-14",
+  "task_count": 140,
+  "source": "bim-control-x-harness.zip",
+  "files_added": [
+    "codex/README.md",
+    "codex/TASK_INDEX.md",
+    "codex/tasks.yaml",
+    "codex/task-status.csv",
+    "codex/REVIEWER_PROMPT.md",
+    "codex/RELEASE_GATES.md",
+    "codex/tasks/*.md",
+    "scripts/validate_codex_tasks.py"
+  ]
+}

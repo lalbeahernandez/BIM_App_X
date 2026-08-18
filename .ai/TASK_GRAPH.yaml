@@ -1,0 +1,15 @@
+version: 1
+nodes:
+  FND-001: {depends_on: [], outcome: "tenancy, audit, outbox, contracts"}
+  BIM-001: {depends_on: [FND-001], outcome: "IFC revision ingest and element index"}
+  VWR-001: {depends_on: [BIM-001], outcome: "production viewer adapter and federated selection"}
+  BOQ-001: {depends_on: [BIM-001], outcome: "takeoff, mapping rules and BOQ"}
+  SCH-001: {depends_on: [FND-001], outcome: "WBS, CPM relationships and calendars"}
+  D4-001: {depends_on: [VWR-001, SCH-001], outcome: "4D simulation states"}
+  PRG-001: {depends_on: [BOQ-001, SCH-001], outcome: "progress and productivity history"}
+  EVM-001: {depends_on: [PRG-001], outcome: "PV EV AC forecast and S curves"}
+  BCF-001: {depends_on: [VWR-001], outcome: "BCF issues and viewpoints"}
+  IDS-001: {depends_on: [BIM-001], outcome: "IDS validation"}
+  DIF-001: {depends_on: [BIM-001], outcome: "revision diff and lineage remap"}
+  GIS-001: {depends_on: [BIM-001], outcome: "georeferencing and setback analysis"}
+  ENT-001: {depends_on: [EVM-001, BCF-001, IDS-001], outcome: "enterprise hardening"}

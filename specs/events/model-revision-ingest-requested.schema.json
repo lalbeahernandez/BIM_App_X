@@ -1,0 +1,38 @@
+
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ModelRevisionIngestRequested",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "occurred_at",
+    "project_id",
+    "revision_id",
+    "file_path"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "const": "model.revision.ingest_requested.v1"
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "project_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "revision_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "file_path": {
+      "type": "string"
+    }
+  }
+}

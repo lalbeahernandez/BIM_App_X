@@ -1,0 +1,10 @@
+flowchart LR
+  U[Project Team] --> W[Web / Work Area]
+  W --> A[API]
+  A --> DB[(PostgreSQL/PostGIS)]
+  A --> R[(Redis)]
+  A --> O[(Object Storage)]
+  R --> BW[BIM Workers]
+  BW --> DB
+  BW --> O
+  A --> OUT[Outbox/Webhooks]

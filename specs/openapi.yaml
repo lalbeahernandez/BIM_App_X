@@ -1,0 +1,32 @@
+openapi: 3.1.0
+info:
+  title: BIM Control X API
+  version: 0.1.0
+paths:
+  /health:
+    get:
+      responses:
+        '200': {description: OK}
+  /v1/projects:
+    get:
+      responses:
+        '200': {description: Project list}
+    post:
+      responses:
+        '201': {description: Project created}
+  /v1/projects/{project_id}/models:
+    post:
+      parameters:
+        - {name: project_id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '201': {description: Model created}
+  /v1/models/{model_id}/revisions:
+    post:
+      parameters:
+        - {name: model_id, in: path, required: true, schema: {type: string, format: uuid}}
+      responses:
+        '202': {description: IFC revision accepted}
+  /v1/selection/resolve:
+    post:
+      responses:
+        '200': {description: Related element/BOQ/activity ids}
