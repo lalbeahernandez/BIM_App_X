@@ -1,6 +1,4 @@
-SHELL := /bin/bash
-
-.PHONY: bootstrap dev down logs ps clean lint format typecheck test smoke verify db-shell seed
+.PHONY: bootstrap dev down logs ps clean lint format typecheck test smoke verify all db-shell seed codex-tasks
 
 bootstrap:
 	@test -f .env || cp .env.example .env
@@ -23,25 +21,26 @@ clean:
 	rm -rf .data apps/web/.next apps/web/node_modules
 
 lint:
-	docker compose run --rm api ruff check app tests
-	docker compose run --rm web npm run lint
+	python scripts/dev.py lint
 
 typecheck:
-	docker compose run --rm api mypy app
-	docker compose run --rm web npm run typecheck
+	python scripts/dev.py typecheck
 
 format:
 	docker compose run --rm api ruff format app tests
 	docker compose run --rm web npm run format
 
 test:
-	docker compose run --rm api pytest -q
+	python scripts/dev.py test
 
 smoke:
-	python scripts/smoke_http.py
+	python scripts/dev.py smoke
 
 verify:
-	python scripts/verify_harness.py
+	python scripts/dev.py verify
+
+all:
+	python scripts/dev.py all
 
 db-shell:
 	docker compose exec db psql -U bim -d bim
@@ -51,4 +50,4 @@ seed:
 
 
 codex-tasks:
-	python scripts/validate_codex_tasks.py
+	python scripts/dev.py codex-tasks

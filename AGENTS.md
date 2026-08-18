@@ -27,13 +27,17 @@
 
 ```bash
 python scripts/verify_harness.py
+python scripts/dev.py lint
+python scripts/dev.py typecheck
+python scripts/dev.py test
+python scripts/dev.py smoke
 make lint
 make typecheck
 make test
 make smoke
 ```
 
-Si un comando no puede ejecutarse por falta de Docker/dependencia, documentar exactamente cuál, por qué y qué se ejecutó en su lugar.
+Si un comando no puede ejecutarse por falta de Docker/dependencia/GNU Make, documentar exactamente cuál, por qué y qué se ejecutó en su lugar. En Windows, `python scripts/dev.py ...` es la interfaz canónica multiplataforma.
 
 ## Definition of Done resumida
 
