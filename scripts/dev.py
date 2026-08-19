@@ -22,6 +22,7 @@ def run(command: list[str], *, cwd: Path = ROOT) -> None:
 def verify() -> None:
     run([sys.executable, "scripts/verify_harness.py"])
     run([sys.executable, "scripts/check_fixtures.py"])
+    run([sys.executable, "scripts/check_roadmap.py"])
 
 
 def codex_tasks() -> None:
@@ -74,12 +75,17 @@ def fixtures() -> None:
     run([sys.executable, "scripts/check_fixtures.py"])
 
 
+def roadmap() -> None:
+    run([sys.executable, "scripts/check_roadmap.py"])
+
+
 COMMANDS = {
     "verify": verify,
     "codex-tasks": codex_tasks,
     "performance-budgets": performance_budgets,
     "security-checklist": security_checklist,
     "fixtures": fixtures,
+    "roadmap": roadmap,
     "lint": lint,
     "lint-api": lint_api,
     "lint-web": lint_web,
