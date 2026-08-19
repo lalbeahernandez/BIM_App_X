@@ -4,13 +4,21 @@ from pathlib import Path
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from fastapi import FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from redis import Redis
 from sqlalchemy import text
 
 from app.audit import enqueue_outbox, record_audit
 from app.config import settings
+from app.context import (
+    ModelScopeNotFound,
+    ProjectScopeNotFound,
+    TenantContext,
+    get_tenant_context,
+    require_model_project_scope,
+    require_project_scope,
+)
 from app.db import connection
 from app.schemas import (
     ModelCreate,
@@ -33,6 +41,7 @@ app.add_middleware(
 )
 
 redis_client = Redis.from_url(settings.redis_url, decode_responses=True)
+TenantDependency = Annotated[TenantContext, Depends(get_tenant_context)]
 
 
 @app.get('/health')
@@ -41,17 +50,17 @@ def health() -> dict:
 
 
 @app.get('/v1/projects', response_model=list[ProjectOut])
-def list_projects():
+def list_projects(tenant_context: TenantDependency):
     with connection() as conn:
         rows = conn.execute(text("""
           SELECT id, organization_id, code, name, timezone, currency, created_at
           FROM projects WHERE organization_id=:org ORDER BY created_at
-        """), {'org': settings.default_org_id}).mappings().all()
+        """), {'org': str(tenant_context.organization_id)}).mappings().all()
     return [dict(r) for r in rows]
 
 
 @app.post('/v1/projects', response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
-def create_project(payload: ProjectCreate):
+def create_project(payload: ProjectCreate, tenant_context: TenantDependency):
     project_id = str(uuid4())
     with connection() as conn:
         row = conn.execute(text("""
@@ -60,7 +69,7 @@ def create_project(payload: ProjectCreate):
           RETURNING id, organization_id, code, name, timezone, currency, created_at
         """), {
             'id': project_id,
-            'org': settings.default_org_id,
+            'org': str(tenant_context.organization_id),
             'code': payload.code,
             'name': payload.name,
             'tz': payload.timezone,
@@ -68,7 +77,7 @@ def create_project(payload: ProjectCreate):
         }).mappings().one()
         record_audit(
             conn,
-            organization_id=settings.default_org_id,
+            organization_id=str(tenant_context.organization_id),
             project_id=project_id,
             actor='dev-user',
             action='project.created',
@@ -80,15 +89,13 @@ def create_project(payload: ProjectCreate):
 
 
 @app.post('/v1/projects/{project_id}/models', response_model=ModelOut, status_code=status.HTTP_201_CREATED)
-def create_model(project_id: UUID, payload: ModelCreate):
+def create_model(project_id: UUID, payload: ModelCreate, tenant_context: TenantDependency):
     model_id = str(uuid4())
     with connection() as conn:
-        exists = conn.execute(
-            text('SELECT 1 FROM projects WHERE id=:id AND organization_id=:org'),
-            {'id': str(project_id), 'org': settings.default_org_id},
-        ).first()
-        if not exists:
-            raise HTTPException(404, 'Project not found')
+        try:
+            project_context = require_project_scope(conn, tenant_context, project_id)
+        except ProjectScopeNotFound:
+            raise HTTPException(404, 'Project not found') from None
         row = conn.execute(text("""
           INSERT INTO models(id, project_id, discipline, name)
           VALUES (:id,:project,:discipline,:name)
@@ -101,7 +108,7 @@ def create_model(project_id: UUID, payload: ModelCreate):
         }).mappings().one()
         record_audit(
             conn,
-            organization_id=settings.default_org_id,
+            organization_id=str(project_context.organization_id),
             project_id=str(project_id),
             actor='dev-user',
             action='model.created',
@@ -113,7 +120,11 @@ def create_model(project_id: UUID, payload: ModelCreate):
 
 
 @app.post('/v1/models/{model_id}/revisions', response_model=RevisionOut, status_code=status.HTTP_202_ACCEPTED)
-async def upload_revision(model_id: UUID, file: Annotated[UploadFile, File(...)]):
+async def upload_revision(
+    model_id: UUID,
+    file: Annotated[UploadFile, File(...)],
+    tenant_context: TenantDependency,
+):
     if not file.filename or not file.filename.lower().endswith('.ifc'):
         raise HTTPException(422, 'Only .ifc files are accepted by this MVP endpoint')
     data = await file.read()
@@ -127,13 +138,11 @@ async def upload_revision(model_id: UUID, file: Annotated[UploadFile, File(...)]
     file_path.write_bytes(data)
 
     with connection() as conn:
-        model = conn.execute(text("""
-          SELECT m.id, m.project_id FROM models m JOIN projects p ON p.id=m.project_id
-          WHERE m.id=:id AND p.organization_id=:org
-        """), {'id': str(model_id), 'org': settings.default_org_id}).mappings().first()
-        if not model:
+        try:
+            project_context = require_model_project_scope(conn, tenant_context, model_id)
+        except ModelScopeNotFound:
             file_path.unlink(missing_ok=True)
-            raise HTTPException(404, 'Model not found')
+            raise HTTPException(404, 'Model not found') from None
         revision_no = conn.execute(
             text('SELECT COALESCE(MAX(revision_no),0)+1 FROM model_revisions WHERE model_id=:id'),
             {'id': str(model_id)},
@@ -151,8 +160,8 @@ async def upload_revision(model_id: UUID, file: Annotated[UploadFile, File(...)]
         }).mappings().one()
         event_id = enqueue_outbox(
             conn,
-            organization_id=settings.default_org_id,
-            project_id=str(model['project_id']),
+            organization_id=str(project_context.organization_id),
+            project_id=str(project_context.project_id),
             event_type='model.revision.ingest_requested.v1',
             payload={
                 'revision_id': revision_id,
@@ -162,8 +171,8 @@ async def upload_revision(model_id: UUID, file: Annotated[UploadFile, File(...)]
         )
         record_audit(
             conn,
-            organization_id=settings.default_org_id,
-            project_id=str(model['project_id']),
+            organization_id=str(project_context.organization_id),
+            project_id=str(project_context.project_id),
             actor='dev-user',
             action='model.revision_uploaded',
             entity_type='model_revision',
@@ -178,15 +187,13 @@ async def upload_revision(model_id: UUID, file: Annotated[UploadFile, File(...)]
 
 
 @app.get('/v1/projects/{project_id}/work-area', response_model=WorkAreaOut)
-def work_area(project_id: UUID):
+def work_area(project_id: UUID, tenant_context: TenantDependency):
     pid = str(project_id)
     with connection() as conn:
-        project_ok = conn.execute(
-            text('SELECT 1 FROM projects WHERE id=:id AND organization_id=:org'),
-            {'id': pid, 'org': settings.default_org_id},
-        ).first()
-        if not project_ok:
-            raise HTTPException(404, 'Project not found')
+        try:
+            require_project_scope(conn, tenant_context, project_id)
+        except ProjectScopeNotFound:
+            raise HTTPException(404, 'Project not found') from None
         boq = conn.execute(text("""
           SELECT id, code, description, unit, quantity::float8 AS quantity, rate::float8 AS rate,
                  (quantity*rate)::float8 AS amount
@@ -210,8 +217,9 @@ def work_area(project_id: UUID):
 
 
 @app.post('/v1/selection/resolve', response_model=SelectionResolveOut)
-def resolve_selection(payload: SelectionResolveIn):
+def resolve_selection(payload: SelectionResolveIn, tenant_context: TenantDependency):
     ids = [str(i) for i in payload.ids]
+    organization_id = str(tenant_context.organization_id)
     with connection() as conn:
         element_ids: set[str] = set()
         boq_ids: set[str] = set()
@@ -226,7 +234,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN projects p ON p.id=m.project_id
                   WHERE e.id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': ids, 'org': settings.default_org_id},
+                {'ids': ids, 'org': organization_id},
             ).all()
             element_ids.update(str(r.id) for r in rows)
             rows = conn.execute(
@@ -240,7 +248,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN boq_items b ON b.id=ebl.boq_item_id AND b.project_id=p.id
                   WHERE ebl.element_id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': list(element_ids), 'org': settings.default_org_id},
+                {'ids': list(element_ids), 'org': organization_id},
             ).all()
             boq_ids.update(str(r.boq_item_id) for r in rows)
             rows = conn.execute(
@@ -254,7 +262,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN activities a ON a.id=eal.activity_id AND a.project_id=p.id
                   WHERE eal.element_id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': list(element_ids), 'org': settings.default_org_id},
+                {'ids': list(element_ids), 'org': organization_id},
             ).all()
             activity_ids.update(str(r.activity_id) for r in rows)
         elif payload.source_type == 'boq':
@@ -265,7 +273,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN projects p ON p.id=b.project_id
                   WHERE b.id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': ids, 'org': settings.default_org_id},
+                {'ids': ids, 'org': organization_id},
             ).all()
             boq_ids.update(str(r.id) for r in rows)
             rows = conn.execute(
@@ -279,7 +287,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN projects p ON p.id=b.project_id AND p.id=m.project_id
                   WHERE ebl.boq_item_id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': list(boq_ids), 'org': settings.default_org_id},
+                {'ids': list(boq_ids), 'org': organization_id},
             ).all()
             element_ids.update(str(r.element_id) for r in rows)
             if element_ids:
@@ -294,7 +302,7 @@ def resolve_selection(payload: SelectionResolveIn):
                       JOIN activities a ON a.id=eal.activity_id AND a.project_id=p.id
                       WHERE eal.element_id = ANY(:ids) AND p.organization_id=:org
                     """),
-                    {'ids': list(element_ids), 'org': settings.default_org_id},
+                    {'ids': list(element_ids), 'org': organization_id},
                 ).all()
                 activity_ids.update(str(r.activity_id) for r in rows)
         else:
@@ -305,7 +313,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN projects p ON p.id=a.project_id
                   WHERE a.id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': ids, 'org': settings.default_org_id},
+                {'ids': ids, 'org': organization_id},
             ).all()
             activity_ids.update(str(r.id) for r in rows)
             rows = conn.execute(
@@ -319,7 +327,7 @@ def resolve_selection(payload: SelectionResolveIn):
                   JOIN projects p ON p.id=a.project_id AND p.id=m.project_id
                   WHERE eal.activity_id = ANY(:ids) AND p.organization_id=:org
                 """),
-                {'ids': list(activity_ids), 'org': settings.default_org_id},
+                {'ids': list(activity_ids), 'org': organization_id},
             ).all()
             element_ids.update(str(r.element_id) for r in rows)
             if element_ids:
@@ -334,7 +342,7 @@ def resolve_selection(payload: SelectionResolveIn):
                       JOIN boq_items b ON b.id=ebl.boq_item_id AND b.project_id=p.id
                       WHERE ebl.element_id = ANY(:ids) AND p.organization_id=:org
                     """),
-                    {'ids': list(element_ids), 'org': settings.default_org_id},
+                    {'ids': list(element_ids), 'org': organization_id},
                 ).all()
                 boq_ids.update(str(r.boq_item_id) for r in rows)
     return {
