@@ -65,10 +65,15 @@ def performance_budgets() -> None:
     run([sys.executable, "scripts/check_performance_budgets.py"])
 
 
+def security_checklist() -> None:
+    run([sys.executable, "scripts/check_security_checklist.py"])
+
+
 COMMANDS = {
     "verify": verify,
     "codex-tasks": codex_tasks,
     "performance-budgets": performance_budgets,
+    "security-checklist": security_checklist,
     "lint": lint,
     "lint-api": lint_api,
     "lint-web": lint_web,
