@@ -7,7 +7,7 @@ AUD-005,0 Discovery & Baseline,MUST,MVP,Definir NFR y presupuestos de rendimient
 AUD-006,0 Discovery & Baseline,MUST,MVP,Threat model inicial,0.5-1.5 d,AUD-002,DONE,,,
 AUD-007,0 Discovery & Baseline,MUST,MVP,Catálogo de fixtures y golden datasets,0.5-1.5 d,AUD-001,DONE,,,
 AUD-008,0 Discovery & Baseline,MUST,MVP,Congelar roadmap técnico v1,0.5-1.5 d,"AUD-003,AUD-004,AUD-005,AUD-006,AUD-007",DONE,,,
-FND-001,1 Foundation,MUST,MVP,Propagar tenant context,0.5-1.5 d,AUD-008,TODO,,,
+FND-001,1 Foundation,MUST,MVP,Propagar tenant context,0.5-1.5 d,AUD-008,DONE,,,
 FND-002,1 Foundation,MUST,MVP,RBAC mínimo,0.5-1.5 d,FND-001,TODO,,,
 FND-003,1 Foundation,MUST,MVP,Framework de migrations,0.5-1.5 d,AUD-004,TODO,,,
 FND-004,1 Foundation,MUST,MVP,Auditoría transaccional,0.5-1.5 d,"FND-001,FND-003",TODO,,,
